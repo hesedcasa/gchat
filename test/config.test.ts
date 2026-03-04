@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {expect} from 'chai'
 import esmock from 'esmock'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 import {type SinonStub, stub} from 'sinon'
 
 describe('config', () => {
@@ -47,7 +49,7 @@ describe('config', () => {
     it('returns null and logs error when file cannot be read', async () => {
       readFileStub.rejects(new Error('ENOENT'))
 
-      const result = await readConfig('/tmp/config', logStub)
+      const result = await readConfig(tmpdir(), logStub)
 
       expect(result).to.be.null
       expect(logStub.called).to.be.true
@@ -56,10 +58,10 @@ describe('config', () => {
     it('logs the config path in the error message', async () => {
       readFileStub.rejects(new Error('ENOENT'))
 
-      await readConfig('/my/config/dir', logStub)
+      await readConfig(join('my', 'config', 'dir'), logStub)
 
       const loggedMessages = logStub.args.flat().join(' ')
-      expect(loggedMessages).to.include('/my/config/dir')
+      expect(loggedMessages).to.include(join('my', 'config', 'dir'))
     })
   })
 
