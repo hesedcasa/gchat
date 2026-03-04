@@ -28,8 +28,8 @@ export default class GChatReplyMessage extends Command {
     const {args, flags} = await this.parse(GChatReplyMessage)
     const config = await readConfig(this.config.configDir, this.log.bind(this))
     if (!config) return
-
-    const result = await replyMessage(config.auth, args.threadName, args.message, flags.formatted)
+    // eslint-disable-next-line unicorn/prefer-string-replace-all
+    const result = await replyMessage(config.auth, args.threadName, args.message.replace(/\\n/g, '\n'), flags.formatted)
     clearClients()
 
     if (flags.toon) {

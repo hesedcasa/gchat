@@ -25,8 +25,8 @@ export default class GChatCreateMessage extends Command {
     const {args, flags} = await this.parse(GChatCreateMessage)
     const config = await readConfig(this.config.configDir, this.log.bind(this))
     if (!config) return
-
-    const result = await newMessage(config.auth, args.spaceId, args.message, flags.formatted)
+    // eslint-disable-next-line unicorn/prefer-string-replace-all
+    const result = await newMessage(config.auth, args.spaceId, args.message.replace(/\\n/g, '\n'), flags.formatted)
     clearClients()
 
     if (flags.toon) {
