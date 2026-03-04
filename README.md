@@ -1,4 +1,4 @@
-# sentry
+# gchat
 
 CLI for Google Chat API interaction
 
@@ -12,7 +12,7 @@ sdkck plugins install @hesed/gchat
 ```
 
 <!-- toc -->
-* [sentry](#sentry)
+* [gchat](#gchat)
 * [Install](#install)
 * [Usage](#usage)
 * [Commands](#commands)
