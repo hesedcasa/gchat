@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/hesedcasa/gchat/compare/v0.2.0...v0.2.1) (2026-03-04)
+
+
+### 🛠️ Fixes
+
+* convert \n escape sequences to actual newlines in message args ([#4](https://github.com/hesedcasa/gchat/issues/4)) ([33aa798](https://github.com/hesedcasa/gchat/commit/33aa798244c1b1221c5b4d72fd5b66e493968e46))
+
 ## [0.2.0](https://github.com/hesedcasa/gchat/compare/v0.1.0...v0.2.0) (2026-03-04)
 
 
