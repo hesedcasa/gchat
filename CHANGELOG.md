@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/hesedcasa/gchat/compare/v0.2.1...v0.2.2) (2026-03-10)
+
+
+### 📄 Documentation
+
+* add link example to create-message command ([#8](https://github.com/hesedcasa/gchat/issues/8)) ([1caf443](https://github.com/hesedcasa/gchat/commit/1caf443d2625a57e3d87446121b9f6c7ba6e32d2))
+
 ## [0.2.1](https://github.com/hesedcasa/gchat/compare/v0.2.0...v0.2.1) (2026-03-04)
 
 
