@@ -26,7 +26,7 @@ $ npm install -g @hesed/gchat
 $ gchat COMMAND
 running command...
 $ gchat (--version)
-@hesed/gchat/0.2.1 linux-x64 node-v20.20.0
+@hesed/gchat/0.2.2 linux-x64 node-v20.20.0
 $ gchat --help [COMMAND]
 USAGE
   $ gchat COMMAND
@@ -61,7 +61,7 @@ EXAMPLES
   $ gchat gchat config add-token AAQAKA6hsFw your-space-token
 ```
 
-_See code: [src/commands/gchat/config/add-token.ts](https://github.com/hesedcasa/gchat/blob/v0.2.1/src/commands/gchat/config/add-token.ts)_
+_See code: [src/commands/gchat/config/add-token.ts](https://github.com/hesedcasa/gchat/blob/v0.2.2/src/commands/gchat/config/add-token.ts)_
 
 ## `gchat gchat config set-key KEY`
 
@@ -81,7 +81,7 @@ EXAMPLES
   $ gchat gchat config set-key your-api-key
 ```
 
-_See code: [src/commands/gchat/config/set-key.ts](https://github.com/hesedcasa/gchat/blob/v0.2.1/src/commands/gchat/config/set-key.ts)_
+_See code: [src/commands/gchat/config/set-key.ts](https://github.com/hesedcasa/gchat/blob/v0.2.2/src/commands/gchat/config/set-key.ts)_
 
 ## `gchat gchat create-message SPACEID MESSAGE`
 
@@ -106,9 +106,11 @@ EXAMPLES
   $ gchat gchat create-message AAQAKA6hsFw "Hello team"
 
   $ gchat gchat create-message AAQAKA6hsFw "*Bold message*" --formatted
+
+  $ gchat gchat create-message AAQAKA6hsFw "<https://example.com|Click here>" -f
 ```
 
-_See code: [src/commands/gchat/create-message.ts](https://github.com/hesedcasa/gchat/blob/v0.2.1/src/commands/gchat/create-message.ts)_
+_See code: [src/commands/gchat/create-message.ts](https://github.com/hesedcasa/gchat/blob/v0.2.2/src/commands/gchat/create-message.ts)_
 
 ## `gchat gchat reply-message THREADNAME MESSAGE`
 
@@ -135,5 +137,5 @@ EXAMPLES
   $ gchat gchat reply-message spaces/AAQAKA6hsFw/threads/D1NI3W2B6vA "*Bold reply*" --formatted
 ```
 
-_See code: [src/commands/gchat/reply-message.ts](https://github.com/hesedcasa/gchat/blob/v0.2.1/src/commands/gchat/reply-message.ts)_
+_See code: [src/commands/gchat/reply-message.ts](https://github.com/hesedcasa/gchat/blob/v0.2.2/src/commands/gchat/reply-message.ts)_
 <!-- commandsstop -->
