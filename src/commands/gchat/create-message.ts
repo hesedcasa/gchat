@@ -15,6 +15,7 @@ export default class GChatCreateMessage extends Command {
   static override examples = [
     '<%= config.bin %> <%= command.id %> AAQAKA6hsFw "Hello team"',
     '<%= config.bin %> <%= command.id %> AAQAKA6hsFw "*Bold message*" --formatted',
+    '<%= config.bin %> <%= command.id %> AAQAKA6hsFw "<https://example.com|Click here>" -f',
   ]
   static override flags = {
     formatted: Flags.boolean({char: 'f', description: 'Enable formatted text (bold, italic, links)', required: false}),
