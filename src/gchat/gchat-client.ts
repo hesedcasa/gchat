@@ -50,3 +50,13 @@ export async function replyMessage(
   const api = initGChat(auth.key)
   return api.replyMessage(threadName, spaceId, apiToken, message, formatted)
 }
+
+export async function listMembers(auth: GChatAuth, spaceId: string): Promise<ApiResult> {
+  const apiToken = auth.tokens[spaceId]
+  if (!apiToken) {
+    return {error: `No API token configured for space: ${spaceId}`, success: false}
+  }
+
+  const api = initGChat(auth.key)
+  return api.listMembers(spaceId, apiToken)
+}

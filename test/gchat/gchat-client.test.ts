@@ -17,11 +17,13 @@ describe('gchat-client', () => {
   let clearClients: any
   let newMessageFn: any
   let replyMessageFn: any
+  let listMembersFn: any
   let mockApiInstance: Record<string, SinonStub>
   let GChatApiStub: SinonStub
 
   beforeEach(async () => {
     mockApiInstance = {
+      listMembers: stub().resolves(mockResult),
       newMessage: stub().resolves(mockResult),
       replyMessage: stub().resolves(mockResult),
     }
@@ -34,6 +36,7 @@ describe('gchat-client', () => {
     clearClients = mod.clearClients
     newMessageFn = mod.newMessage
     replyMessageFn = mod.replyMessage
+    listMembersFn = mod.listMembers
   })
 
   afterEach(() => {
@@ -125,6 +128,25 @@ describe('gchat-client', () => {
       expect(result.success).to.be.false
       expect(result.error).to.include('UNKNOWN')
       expect(mockApiInstance.replyMessage.called).to.be.false
+    })
+  })
+
+  describe('listMembers', () => {
+    it('delegates to GChatApi.listMembers with correct args', async () => {
+      const result = await listMembersFn(mockAuth, SPACE_ID)
+
+      expect(mockApiInstance.listMembers.calledOnce).to.be.true
+      expect(mockApiInstance.listMembers.firstCall.args[0]).to.equal(SPACE_ID)
+      expect(mockApiInstance.listMembers.firstCall.args[1]).to.equal('token-for-space')
+      expect(result).to.deep.equal(mockResult)
+    })
+
+    it('returns error when space has no token configured', async () => {
+      const result = await listMembersFn(mockAuth, 'UNKNOWN_SPACE')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.include('UNKNOWN_SPACE')
+      expect(mockApiInstance.listMembers.called).to.be.false
     })
   })
 })
