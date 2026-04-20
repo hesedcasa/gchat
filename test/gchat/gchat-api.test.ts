@@ -174,4 +174,80 @@ describe('GChatApi', () => {
       expect(result.success).to.be.false
     })
   })
+
+  describe('listMembers', () => {
+    it('GETs the correct URL with key and token', async () => {
+      const responseData = {memberships: [{member: {name: 'users/1', type: 'HUMAN'}, name: 'spaces/X/members/Y', role: 'ROLE_MEMBER'}]}
+      fetchStub.resolves(new Response(JSON.stringify(responseData), {status: 200}))
+
+      await api.listMembers(SPACE_ID, API_TOKEN)
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.include(`/spaces/${SPACE_ID}/members`)
+      expect(url).to.include(`key=${API_KEY}`)
+      expect(url).to.include(`token=${API_TOKEN}`)
+      expect(url).to.include('pageSize=1000')
+      expect(options.method).to.equal('GET')
+    })
+
+    it('returns success with memberships on 200 response', async () => {
+      const responseData = {memberships: [{member: {name: 'users/1', type: 'HUMAN'}, name: 'spaces/X/members/Y', role: 'ROLE_MEMBER'}]}
+      fetchStub.resolves(new Response(JSON.stringify(responseData), {status: 200}))
+
+      const result = await api.listMembers(SPACE_ID, API_TOKEN)
+
+      expect(result.success).to.be.true
+      expect(result.data).to.deep.equal({memberships: responseData.memberships})
+    })
+
+    it('returns success with empty memberships when none exist', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({memberships: []}), {status: 200}))
+
+      const result = await api.listMembers(SPACE_ID, API_TOKEN)
+
+      expect(result.success).to.be.true
+      expect(result.data).to.deep.equal({memberships: []})
+    })
+
+    it('auto-paginates by following nextPageToken', async () => {
+      const page1 = {
+        memberships: [{name: 'spaces/X/members/1'}],
+        nextPageToken: 'page2token',
+      }
+      const page2 = {
+        memberships: [{name: 'spaces/X/members/2'}],
+      }
+
+      fetchStub.onFirstCall().resolves(new Response(JSON.stringify(page1), {status: 200}))
+      fetchStub.onSecondCall().resolves(new Response(JSON.stringify(page2), {status: 200}))
+
+      const result = await api.listMembers(SPACE_ID, API_TOKEN)
+
+      expect(result.success).to.be.true
+      expect(result.data).to.deep.equal({
+        memberships: [{name: 'spaces/X/members/1'}, {name: 'spaces/X/members/2'}],
+      })
+      expect(fetchStub.calledTwice).to.be.true
+      expect(fetchStub.secondCall.args[0]).to.include('pageToken=page2token')
+    })
+
+    it('returns error on non-OK response', async () => {
+      const errorBody = {error: {status: 'PERMISSION_DENIED'}}
+      fetchStub.resolves(new Response(JSON.stringify(errorBody), {status: 403}))
+
+      const result = await api.listMembers(SPACE_ID, API_TOKEN)
+
+      expect(result.success).to.be.false
+      expect(result.error).to.deep.equal(errorBody)
+    })
+
+    it('returns error on network exception', async () => {
+      fetchStub.rejects(new Error('Network timeout'))
+
+      const result = await api.listMembers(SPACE_ID, API_TOKEN)
+
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('Network timeout')
+    })
+  })
 })

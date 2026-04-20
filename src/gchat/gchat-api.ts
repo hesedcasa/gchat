@@ -12,6 +12,23 @@ export class GChatApi {
     this.apiKey = apiKey
   }
 
+  async listMembers(spaceId: string, apiToken: string): Promise<ApiResult> {
+    let allMemberships: unknown[] = []
+    let pageToken = ''
+    while (true) {
+      const url = `${GChatApi.BASE_URL}/spaces/${spaceId}/members?key=${this.apiKey}&token=${apiToken}&pageSize=1000${pageToken ? `&pageToken=${pageToken}` : ''}`
+      // eslint-disable-next-line no-await-in-loop
+      const result = await this.get(url)
+      if (!result.success) return result
+      const data = result.data as {memberships?: unknown[]; nextPageToken?: string}
+      allMemberships = [...allMemberships, ...(data.memberships ?? [])]
+      pageToken = data.nextPageToken ?? ''
+      if (!pageToken) break
+    }
+
+    return {data: {memberships: allMemberships}, success: true}
+  }
+
   async newMessage(spaceId: string, apiToken: string, message: string, formatted = false): Promise<ApiResult> {
     const url = `${GChatApi.BASE_URL}/spaces/${spaceId}/messages?key=${this.apiKey}&token=${apiToken}`
     const payload: Record<string, unknown> = {text: message}
@@ -31,6 +48,36 @@ export class GChatApi {
     const payload: Record<string, unknown> = {text: message, thread: {name: threadName}}
     if (formatted) payload.formattedText = message
     return this.post(url, payload)
+  }
+
+  private async get(url: string): Promise<ApiResult> {
+    try {
+      // eslint-disable-next-line n/no-unsupported-features/node-builtins -- fetch is available in Node 18+
+      const response = await fetch(url, {
+        headers: {'Content-Type': 'application/json'},
+        method: 'GET',
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        let errorData: unknown
+        try {
+          errorData = JSON.parse(errorText)
+        } catch {
+          errorData = errorText
+        }
+
+        return {error: errorData, success: false}
+      }
+
+      const data: unknown = await response.json()
+      return {data, success: true}
+    } catch (error: unknown) {
+      return {
+        error: error instanceof Error ? error.message : String(error),
+        success: false,
+      }
+    }
   }
 
   private async post(url: string, payload: Record<string, unknown>): Promise<ApiResult> {
