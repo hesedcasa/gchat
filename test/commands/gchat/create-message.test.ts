@@ -10,10 +10,14 @@ describe('gchat:create-message', () => {
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
+  const mockAuth = {
+    key: 'test-api-key',
+    tokens: {AAQAKA6hsFw: 'space-token'},
+  }
   const mockConfig = {
-    auth: {
-      key: 'test-api-key',
-      tokens: {AAQAKA6hsFw: 'space-token'},
+    profiles: {
+      default: mockAuth,
+      work: {key: 'work-key', tokens: {AAQAKA6hsFw: 'work-token'}},
     },
   }
 
@@ -48,7 +52,7 @@ describe('gchat:create-message', () => {
 
     expect(readConfigStub.calledOnce).to.be.true
     expect(newMessageStub.calledOnce).to.be.true
-    expect(newMessageStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(newMessageStub.firstCall.args[0]).to.deep.equal(mockAuth)
     expect(newMessageStub.firstCall.args[1]).to.equal('AAQAKA6hsFw')
     expect(newMessageStub.firstCall.args[2]).to.equal('Hello team')
     expect(clearClientsStub.calledOnce).to.be.true
@@ -67,6 +71,37 @@ describe('gchat:create-message', () => {
     await cmd.run()
 
     expect(newMessageStub.firstCall.args[3]).to.be.true
+  })
+
+  it('uses the auth of the profile named by --profile', async () => {
+    const cmd = new GChatCreateMessage(['AAQAKA6hsFw', 'Hello', '--profile', 'work'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'logJson')
+
+    await cmd.run()
+
+    expect(newMessageStub.calledOnce).to.be.true
+    expect(newMessageStub.firstCall.args[0]).to.deep.equal(mockConfig.profiles.work)
+  })
+
+  it('returns early when the requested profile is not found', async () => {
+    const cmd = new GChatCreateMessage(['AAQAKA6hsFw', 'Hello', '--profile', 'ghost'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logStub = stub(cmd, 'log')
+    const logJsonStub = stub(cmd, 'logJson')
+
+    await cmd.run()
+
+    expect(newMessageStub.called).to.be.false
+    expect(clearClientsStub.called).to.be.false
+    expect(logJsonStub.called).to.be.false
+    expect(logStub.args.flat().join(' ')).to.include('ghost')
   })
 
   it('returns early when config is missing', async () => {

@@ -9,6 +9,8 @@ describe('config', () => {
   let readConfig: any
   let readConfigOrEmpty: any
   let writeConfig: any
+  let resolveProfile: any
+  let DEFAULT_PROFILE: any
   let readFileStub: SinonStub
   let writeFileStub: SinonStub
   let mkdirStub: SinonStub
@@ -26,24 +28,33 @@ describe('config', () => {
     readConfig = mod.readConfig
     readConfigOrEmpty = mod.readConfigOrEmpty
     writeConfig = mod.writeConfig
+    resolveProfile = mod.resolveProfile
+    DEFAULT_PROFILE = mod.DEFAULT_PROFILE
   })
 
   describe('readConfig', () => {
-    it('returns GChatConfig with auth on success', async () => {
+    it('parses a profiles-based config', async () => {
+      readFileStub.resolves(JSON.stringify({profiles: {work: {key: 'work-key', tokens: {SPACE1: 'tok1'}}}}))
+
+      const result = await readConfig('/tmp/config', logStub)
+
+      expect(result).to.deep.equal({profiles: {work: {key: 'work-key', tokens: {SPACE1: 'tok1'}}}})
+    })
+
+    it('migrates a legacy config into the default profile', async () => {
       readFileStub.resolves(JSON.stringify({key: 'my-key', tokens: {SPACE1: 'tok1'}}))
 
       const result = await readConfig('/tmp/config', logStub)
 
-      expect(result).to.deep.equal({auth: {key: 'my-key', tokens: {SPACE1: 'tok1'}}})
+      expect(result).to.deep.equal({profiles: {default: {key: 'my-key', tokens: {SPACE1: 'tok1'}}}})
     })
 
-    it('defaults tokens to empty object when missing', async () => {
-      readFileStub.resolves(JSON.stringify({key: 'my-key'}))
+    it('defaults tokens to empty object when missing in a profile', async () => {
+      readFileStub.resolves(JSON.stringify({profiles: {default: {key: 'my-key'}}}))
 
       const result = await readConfig('/tmp/config', logStub)
 
-      expect(result).to.not.be.null
-      expect(result!.auth.tokens).to.deep.equal({})
+      expect(result!.profiles.default.tokens).to.deep.equal({})
     })
 
     it('returns null and logs error when file cannot be read', async () => {
@@ -66,34 +77,34 @@ describe('config', () => {
   })
 
   describe('readConfigOrEmpty', () => {
-    it('returns parsed config when file exists', async () => {
+    it('returns parsed profiles when file exists', async () => {
+      readFileStub.resolves(JSON.stringify({profiles: {default: {key: 'my-key', tokens: {SPACE1: 'tok1'}}}}))
+
+      const result = await readConfigOrEmpty('/tmp/config')
+
+      expect(result).to.deep.equal({profiles: {default: {key: 'my-key', tokens: {SPACE1: 'tok1'}}}})
+    })
+
+    it('migrates a legacy config into the default profile', async () => {
       readFileStub.resolves(JSON.stringify({key: 'my-key', tokens: {SPACE1: 'tok1'}}))
 
       const result = await readConfigOrEmpty('/tmp/config')
 
-      expect(result).to.deep.equal({auth: {key: 'my-key', tokens: {SPACE1: 'tok1'}}})
+      expect(result).to.deep.equal({profiles: {default: {key: 'my-key', tokens: {SPACE1: 'tok1'}}}})
     })
 
-    it('defaults key to empty string when missing', async () => {
-      readFileStub.resolves(JSON.stringify({tokens: {}}))
-
-      const result = await readConfigOrEmpty('/tmp/config')
-
-      expect(result.auth.key).to.equal('')
-    })
-
-    it('returns empty config when file does not exist', async () => {
+    it('returns empty profiles when file does not exist', async () => {
       readFileStub.rejects(new Error('ENOENT'))
 
       const result = await readConfigOrEmpty('/tmp/config')
 
-      expect(result).to.deep.equal({auth: {key: '', tokens: {}}})
+      expect(result).to.deep.equal({profiles: {}})
     })
   })
 
   describe('writeConfig', () => {
     it('creates the config directory and writes the file', async () => {
-      const config = {auth: {key: 'my-key', tokens: {SPACE1: 'tok1'}}}
+      const config = {profiles: {default: {key: 'my-key', tokens: {SPACE1: 'tok1'}}}}
 
       await writeConfig('/tmp/config', config)
 
@@ -101,14 +112,42 @@ describe('config', () => {
       expect(writeFileStub.calledOnce).to.be.true
     })
 
-    it('writes auth content as JSON to the config path', async () => {
-      const config = {auth: {key: 'my-key', tokens: {SPACE1: 'tok1'}}}
+    it('writes profiles content as JSON to the config path', async () => {
+      const config = {profiles: {default: {key: 'my-key', tokens: {SPACE1: 'tok1'}}}}
 
       await writeConfig('/tmp/config', config)
 
       const [filePath, content] = writeFileStub.firstCall.args
       expect(filePath).to.include('gchat-config.json')
-      expect(JSON.parse(content)).to.deep.equal({key: 'my-key', tokens: {SPACE1: 'tok1'}})
+      expect(JSON.parse(content)).to.deep.equal({profiles: {default: {key: 'my-key', tokens: {SPACE1: 'tok1'}}}})
+    })
+  })
+
+  describe('resolveProfile', () => {
+    it('returns the auth for an existing profile', () => {
+      const auth = {key: 'work-key', tokens: {SPACE1: 'tok1'}}
+      const config = {profiles: {work: auth}}
+
+      const result = resolveProfile(config, 'work', logStub)
+
+      expect(result).to.equal(auth)
+      expect(logStub.called).to.be.false
+    })
+
+    it('returns null and logs when the profile is missing', () => {
+      const config = {profiles: {default: {key: 'k', tokens: {}}}}
+
+      const result = resolveProfile(config, 'missing', logStub)
+
+      expect(result).to.be.null
+      const loggedMessages = logStub.args.flat().join(' ')
+      expect(loggedMessages).to.include('missing')
+    })
+  })
+
+  describe('DEFAULT_PROFILE', () => {
+    it('is "default"', () => {
+      expect(DEFAULT_PROFILE).to.equal('default')
     })
   })
 })

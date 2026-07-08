@@ -1,6 +1,6 @@
 import {Args, Command, Flags} from '@oclif/core'
 
-import {readConfig} from '../../config.js'
+import {DEFAULT_PROFILE, readConfig, resolveProfile} from '../../config.js'
 import {formatAsToon} from '../../format.js'
 import {clearClients, replyMessage} from '../../gchat/gchat-client.js'
 
@@ -17,10 +17,17 @@ export default class GChatReplyMessage extends Command {
   static override description = 'Reply to a message thread in Google Chat'
   static override examples = [
     '<%= config.bin %> <%= command.id %> spaces/AAQAKA6hsFw/threads/D1NI3W2B6vA "Reply here"',
+    '<%= config.bin %> <%= command.id %> spaces/AAQAKA6hsFw/threads/D1NI3W2B6vA "Reply here" --profile work',
     '<%= config.bin %> <%= command.id %> spaces/AAQAKA6hsFw/threads/D1NI3W2B6vA "*Bold reply*" --formatted',
   ]
   static override flags = {
     formatted: Flags.boolean({char: 'f', description: 'Enable formatted text (bold, italic, links)', required: false}),
+    profile: Flags.string({
+      char: 'p',
+      default: DEFAULT_PROFILE,
+      description: 'Config profile to use',
+      required: false,
+    }),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
@@ -28,8 +35,10 @@ export default class GChatReplyMessage extends Command {
     const {args, flags} = await this.parse(GChatReplyMessage)
     const config = await readConfig(this.config.configDir, this.log.bind(this))
     if (!config) return
+    const auth = resolveProfile(config, flags.profile, this.log.bind(this))
+    if (!auth) return
     // eslint-disable-next-line unicorn/prefer-string-replace-all
-    const result = await replyMessage(config.auth, args.threadName, args.message.replace(/\\n/g, '\n'), flags.formatted)
+    const result = await replyMessage(auth, args.threadName, args.message.replace(/\\n/g, '\n'), flags.formatted)
     clearClients()
 
     if (flags.toon) {

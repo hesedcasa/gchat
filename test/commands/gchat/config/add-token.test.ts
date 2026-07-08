@@ -8,7 +8,7 @@ describe('gchat:config:add-token', () => {
   let readConfigOrEmptyStub: SinonStub
   let writeConfigStub: SinonStub
 
-  const mockConfig = {auth: {key: 'my-api-key', tokens: {}}}
+  const mockConfig = {profiles: {default: {key: 'my-api-key', tokens: {}}}}
 
   beforeEach(async () => {
     readConfigOrEmptyStub = stub().resolves(mockConfig)
@@ -23,8 +23,10 @@ describe('gchat:config:add-token', () => {
     ConfigAddToken = imported.default
   })
 
-  it('reads existing config and writes token for given space', async () => {
-    const cmd = new ConfigAddToken(['AAQAKA6hsFw', 'my-space-token'], {
+  it('reads existing config and writes token for the given profile and space', async () => {
+    readConfigOrEmptyStub.resolves({profiles: {default: {key: 'my-api-key', tokens: {}}}})
+
+    const cmd = new ConfigAddToken(['default', 'AAQAKA6hsFw', 'my-space-token'], {
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -36,14 +38,14 @@ describe('gchat:config:add-token', () => {
     expect(readConfigOrEmptyStub.calledWith('/tmp/test-config')).to.be.true
     expect(writeConfigStub.calledOnce).to.be.true
     const writtenConfig = writeConfigStub.firstCall.args[1]
-    expect(writtenConfig.auth.tokens.AAQAKA6hsFw).to.equal('my-space-token')
-    expect(logStub.calledWith('Token for space AAQAKA6hsFw updated successfully.')).to.be.true
+    expect(writtenConfig.profiles.default.tokens.AAQAKA6hsFw).to.equal('my-space-token')
+    expect(logStub.calledWith("Token for space AAQAKA6hsFw in profile 'default' updated successfully.")).to.be.true
   })
 
   it('preserves existing tokens when adding a new one', async () => {
-    readConfigOrEmptyStub.resolves({auth: {key: 'key', tokens: {EXISTING: 'existing-tok'}}})
+    readConfigOrEmptyStub.resolves({profiles: {default: {key: 'key', tokens: {EXISTING: 'existing-tok'}}}})
 
-    const cmd = new ConfigAddToken(['NEW_SPACE', 'new-tok'], {
+    const cmd = new ConfigAddToken(['default', 'NEW_SPACE', 'new-tok'], {
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -53,14 +55,14 @@ describe('gchat:config:add-token', () => {
     await cmd.run()
 
     const writtenConfig = writeConfigStub.firstCall.args[1]
-    expect(writtenConfig.auth.tokens.EXISTING).to.equal('existing-tok')
-    expect(writtenConfig.auth.tokens.NEW_SPACE).to.equal('new-tok')
+    expect(writtenConfig.profiles.default.tokens.EXISTING).to.equal('existing-tok')
+    expect(writtenConfig.profiles.default.tokens.NEW_SPACE).to.equal('new-tok')
   })
 
   it('overwrites an existing token for the same space', async () => {
-    readConfigOrEmptyStub.resolves({auth: {key: 'key', tokens: {SPACE1: 'old-token'}}})
+    readConfigOrEmptyStub.resolves({profiles: {default: {key: 'key', tokens: {SPACE1: 'old-token'}}}})
 
-    const cmd = new ConfigAddToken(['SPACE1', 'updated-token'], {
+    const cmd = new ConfigAddToken(['default', 'SPACE1', 'updated-token'], {
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -70,13 +72,30 @@ describe('gchat:config:add-token', () => {
     await cmd.run()
 
     const writtenConfig = writeConfigStub.firstCall.args[1]
-    expect(writtenConfig.auth.tokens.SPACE1).to.equal('updated-token')
+    expect(writtenConfig.profiles.default.tokens.SPACE1).to.equal('updated-token')
+  })
+
+  it('adds a token to a non-default profile, creating it if needed', async () => {
+    readConfigOrEmptyStub.resolves({profiles: {default: {key: 'default-key', tokens: {}}}})
+
+    const cmd = new ConfigAddToken(['work', 'SPACE1', 'work-tok'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'log')
+
+    await cmd.run()
+
+    const writtenConfig = writeConfigStub.firstCall.args[1]
+    expect(writtenConfig.profiles.work).to.deep.equal({key: '', tokens: {SPACE1: 'work-tok'}})
+    expect(writtenConfig.profiles.default.key).to.equal('default-key')
   })
 
   it('preserves the API key when adding a token', async () => {
-    readConfigOrEmptyStub.resolves({auth: {key: 'preserved-key', tokens: {}}})
+    readConfigOrEmptyStub.resolves({profiles: {default: {key: 'preserved-key', tokens: {}}}})
 
-    const cmd = new ConfigAddToken(['SPACE1', 'tok'], {
+    const cmd = new ConfigAddToken(['default', 'SPACE1', 'tok'], {
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -86,6 +105,6 @@ describe('gchat:config:add-token', () => {
     await cmd.run()
 
     const writtenConfig = writeConfigStub.firstCall.args[1]
-    expect(writtenConfig.auth.key).to.equal('preserved-key')
+    expect(writtenConfig.profiles.default.key).to.equal('preserved-key')
   })
 })

@@ -49,10 +49,12 @@ src/
 ### Key Architectural Patterns
 
 **Two-Tier API Pattern:**
+
 - **Client layer** (`gchat-client.ts`) — singleton `GChatApi` instance, exported functions (`newMessage`, `replyMessage`), `clearClients()` for cleanup
 - **API layer** (`gchat-api.ts`) — `GChatApi` class using native `fetch`, returns `ApiResult`
 
 **ApiResult:**
+
 ```typescript
 interface ApiResult {
   data?: unknown
@@ -61,24 +63,38 @@ interface ApiResult {
 }
 ```
 
-**Authentication:** Google Chat requires two credentials per space:
-- A global API key (`auth.key`) — shared across all spaces
-- A per-space token (`auth.tokens[spaceId]`) — unique per space
+**Profiles:** Config is organized into named profiles. Each profile is one `GChatAuth` (one key + many tokens). `DEFAULT_PROFILE` is `'default'`. Message commands take an optional `--profile` / `-p` flag (defaults to `default`); config commands take a **required** `profile` positional arg.
+
+**Authentication:** Google Chat requires two credentials per space, scoped to a profile:
+
+- An API key (`profile.key`) — shared across all spaces in that profile
+- A per-space token (`profile.tokens[spaceId]`) — unique per space
 
 **Config functions:**
+
 - `readConfig()` — returns `GChatConfig | null`, logs error if missing (use in message commands)
-- `readConfigOrEmpty()` — returns `GChatConfig` with empty defaults (use in config commands)
-- `writeConfig()` — creates dir if needed, writes `auth` object as JSON
+- `readConfigOrEmpty()` — returns `GChatConfig` with empty `profiles` (use in config commands)
+- `writeConfig()` — creates dir if needed, writes `{profiles}` object as JSON
+- `resolveProfile(config, name, log)` — returns the profile's `GChatAuth`, or `null` + logs if not found (use in message commands after `readConfig`)
 
 Config is stored at `~/.config/gchat/gchat-config.json`:
+
 ```json
 {
-  "key": "your-api-key",
-  "tokens": {
-    "SPACE_ID": "space-token"
+  "profiles": {
+    "default": {
+      "key": "your-api-key",
+      "tokens": {"SPACE_ID": "space-token"}
+    },
+    "work": {
+      "key": "your-work-api-key",
+      "tokens": {}
+    }
   }
 }
 ```
+
+**Legacy migration:** A pre-profiles config with top-level `key`/`tokens` is read transparently as the `default` profile; the next `writeConfig()` upgrades the file to the `profiles` shape.
 
 ## Adding a New Command
 
@@ -89,6 +105,7 @@ Config is stored at `~/.config/gchat/gchat-config.json`:
 **Argument ordering:** When positional args aren't alphabetically ordered, wrap `static args` with `/* eslint-disable/enable perfectionist/sort-objects */`.
 
 Example (`create-message.ts`):
+
 ```typescript
 /* eslint-disable perfectionist/sort-objects */
 static override args = {
@@ -107,6 +124,7 @@ static override args = {
 - 60-second timeout
 
 **Test pattern:**
+
 ```typescript
 const imported = await esmock('../../../../src/commands/gchat/create-message.js', {
   '../../../../src/config.js': {readConfig: readConfigStub},
