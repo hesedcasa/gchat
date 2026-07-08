@@ -10,10 +10,14 @@ describe('gchat:reply-message', () => {
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
+  const mockAuth = {
+    key: 'test-api-key',
+    tokens: {AAQAKA6hsFw: 'space-token'},
+  }
   const mockConfig = {
-    auth: {
-      key: 'test-api-key',
-      tokens: {AAQAKA6hsFw: 'space-token'},
+    profiles: {
+      default: mockAuth,
+      work: {key: 'work-key', tokens: {AAQAKA6hsFw: 'work-token'}},
     },
   }
 
@@ -49,7 +53,7 @@ describe('gchat:reply-message', () => {
 
     expect(readConfigStub.calledOnce).to.be.true
     expect(replyMessageStub.calledOnce).to.be.true
-    expect(replyMessageStub.firstCall.args[0]).to.deep.equal(mockConfig.auth)
+    expect(replyMessageStub.firstCall.args[0]).to.deep.equal(mockAuth)
     expect(replyMessageStub.firstCall.args[1]).to.equal(THREAD_NAME)
     expect(replyMessageStub.firstCall.args[2]).to.equal('Reply here')
     expect(clearClientsStub.calledOnce).to.be.true
@@ -68,6 +72,37 @@ describe('gchat:reply-message', () => {
     await cmd.run()
 
     expect(replyMessageStub.firstCall.args[3]).to.be.true
+  })
+
+  it('uses the auth of the profile named by --profile', async () => {
+    const cmd = new GChatReplyMessage([THREAD_NAME, 'Reply here', '--profile', 'work'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'logJson')
+
+    await cmd.run()
+
+    expect(replyMessageStub.calledOnce).to.be.true
+    expect(replyMessageStub.firstCall.args[0]).to.deep.equal(mockConfig.profiles.work)
+  })
+
+  it('returns early when the requested profile is not found', async () => {
+    const cmd = new GChatReplyMessage([THREAD_NAME, 'Reply', '--profile', 'ghost'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logStub = stub(cmd, 'log')
+    const logJsonStub = stub(cmd, 'logJson')
+
+    await cmd.run()
+
+    expect(replyMessageStub.called).to.be.false
+    expect(clearClientsStub.called).to.be.false
+    expect(logJsonStub.called).to.be.false
+    expect(logStub.args.flat().join(' ')).to.include('ghost')
   })
 
   it('returns early when config is missing', async () => {

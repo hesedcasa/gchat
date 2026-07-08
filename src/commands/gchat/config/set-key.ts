@@ -3,17 +3,25 @@ import {Args, Command} from '@oclif/core'
 import {readConfigOrEmpty, writeConfig} from '../../../config.js'
 
 export default class ConfigSetKey extends Command {
+  /* eslint-disable perfectionist/sort-objects */
   static override args = {
+    profile: Args.string({description: 'Config profile name', required: true}),
     key: Args.string({description: 'Google Chat API key', required: true}),
   }
-  static override description = 'Set the Google Chat API key in the config file'
-  static override examples = ['<%= config.bin %> <%= command.id %> your-api-key']
+  /* eslint-enable perfectionist/sort-objects */
+  static override description = 'Set the Google Chat API key for a profile'
+  static override examples = [
+    '<%= config.bin %> <%= command.id %> default your-api-key',
+    '<%= config.bin %> <%= command.id %> work your-work-api-key',
+  ]
 
   public async run(): Promise<void> {
     const {args} = await this.parse(ConfigSetKey)
     const config = await readConfigOrEmpty(this.config.configDir)
-    config.auth.key = args.key
+    const profile = config.profiles[args.profile] ?? {key: '', tokens: {}}
+    profile.key = args.key
+    config.profiles[args.profile] = profile
     await writeConfig(this.config.configDir, config)
-    this.log('API key updated successfully.')
+    this.log(`API key for profile '${args.profile}' updated successfully.`)
   }
 }
