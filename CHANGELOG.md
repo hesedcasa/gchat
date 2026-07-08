@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/hesedcasa/gchat/compare/v0.2.2...v0.3.0) (2026-07-08)
+
+
+### 🎉 Features
+
+* support multiple config profiles ([#52](https://github.com/hesedcasa/gchat/issues/52)) ([a051ffd](https://github.com/hesedcasa/gchat/commit/a051ffdc4051835f9522f7e7349eb6710c5922b8))
+
 ## [0.2.2](https://github.com/hesedcasa/gchat/compare/v0.2.1...v0.2.2) (2026-03-10)
 
 
