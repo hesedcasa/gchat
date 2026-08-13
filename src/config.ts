@@ -1,23 +1,23 @@
 import {mkdir, readFile, writeFile} from 'node:fs/promises'
-import {join} from 'node:path'
+import path from 'node:path'
 
 export const DEFAULT_PROFILE = 'default'
 
-export interface GChatAuth {
+export type GChatAuth = {
   key: string
   tokens: Record<string, string>
 }
 
-export interface GChatConfig {
+export type GChatConfig = {
   profiles: Record<string, GChatAuth>
 }
 
-interface RawProfile {
+type RawProfile = {
   key?: string
   tokens?: Record<string, string>
 }
 
-interface RawConfig extends RawProfile {
+type RawConfig = RawProfile & {
   profiles?: Record<string, RawProfile>
 }
 
@@ -36,9 +36,9 @@ function parseProfiles(raw: RawConfig): Record<string, GChatAuth> {
 }
 
 export async function readConfigOrEmpty(configDir: string): Promise<GChatConfig> {
-  const configPath = join(configDir, 'gchat-config.json')
+  const configPath = path.join(configDir, 'gchat-config.json')
   try {
-    const raw = JSON.parse(await readFile(configPath, 'utf8'))
+    const raw = JSON.parse(await readFile(configPath, 'utf8')) as RawConfig
     return {profiles: parseProfiles(raw)}
   } catch {
     return {profiles: {}}
@@ -46,15 +46,15 @@ export async function readConfigOrEmpty(configDir: string): Promise<GChatConfig>
 }
 
 export async function writeConfig(configDir: string, config: GChatConfig): Promise<void> {
-  const configPath = join(configDir, 'gchat-config.json')
+  const configPath = path.join(configDir, 'gchat-config.json')
   await mkdir(configDir, {recursive: true})
   await writeFile(configPath, JSON.stringify({profiles: config.profiles}, null, 2))
 }
 
 export async function readConfig(configDir: string, log: (msg: string) => void): Promise<GChatConfig | null> {
-  const configPath = join(configDir, 'gchat-config.json')
+  const configPath = path.join(configDir, 'gchat-config.json')
   try {
-    const raw = JSON.parse(await readFile(configPath, 'utf8'))
+    const raw = JSON.parse(await readFile(configPath, 'utf8')) as RawConfig
     return {profiles: parseProfiles(raw)}
   } catch {
     log(`Error: Could not read config from ${configPath}`)

@@ -5,7 +5,7 @@ import {formatAsToon} from '../../format.js'
 import {clearClients, replyMessage} from '../../gchat/gchat-client.js'
 
 export default class GChatReplyMessage extends Command {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- threadName must precede message in CLI arg order */
   static override args = {
     threadName: Args.string({
       description: 'Thread name (e.g. spaces/SPACE_ID/threads/THREAD_ID)',
@@ -14,12 +14,14 @@ export default class GChatReplyMessage extends Command {
     message: Args.string({description: 'Message text to send', required: true}),
   }
   /* eslint-enable perfectionist/sort-objects */
+
   static override description = 'Reply to a message thread in Google Chat'
   static override examples = [
     '<%= config.bin %> <%= command.id %> spaces/AAQAKA6hsFw/threads/D1NI3W2B6vA "Reply here"',
     '<%= config.bin %> <%= command.id %> spaces/AAQAKA6hsFw/threads/D1NI3W2B6vA "Reply here" --profile work',
     '<%= config.bin %> <%= command.id %> spaces/AAQAKA6hsFw/threads/D1NI3W2B6vA "*Bold reply*" --formatted',
   ]
+
   static override flags = {
     formatted: Flags.boolean({char: 'f', description: 'Enable formatted text (bold, italic, links)', required: false}),
     profile: Flags.string({
@@ -37,8 +39,12 @@ export default class GChatReplyMessage extends Command {
     if (!config) return
     const auth = resolveProfile(config, flags.profile, this.log.bind(this))
     if (!auth) return
-    // eslint-disable-next-line unicorn/prefer-string-replace-all
-    const result = await replyMessage(auth, args.threadName, args.message.replace(/\\n/g, '\n'), flags.formatted)
+    const result = await replyMessage(
+      auth,
+      args.threadName,
+      args.message.replaceAll(String.raw`\n`, '\n'),
+      flags.formatted,
+    )
     clearClients()
 
     if (flags.toon) {

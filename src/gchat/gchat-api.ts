@@ -1,11 +1,12 @@
-export interface ApiResult {
+export type ApiResult = {
   data?: unknown
   error?: unknown
   success: boolean
 }
 
+const BASE_URL = 'https://chat.googleapis.com/v1'
+
 export class GChatApi {
-  private static readonly BASE_URL = 'https://chat.googleapis.com/v1'
   private readonly apiKey: string
 
   constructor(apiKey: string) {
@@ -13,13 +14,13 @@ export class GChatApi {
   }
 
   async newMessage(spaceId: string, apiToken: string, message: string, formatted = false): Promise<ApiResult> {
-    const url = `${GChatApi.BASE_URL}/spaces/${spaceId}/messages?key=${this.apiKey}&token=${apiToken}`
+    const url = `${BASE_URL}/spaces/${spaceId}/messages?key=${this.apiKey}&token=${apiToken}`
     const payload: Record<string, unknown> = {text: message}
     if (formatted) payload.formattedText = message
     return this.post(url, payload)
   }
 
-  // eslint-disable-next-line max-params
+  // eslint-disable-next-line max-params -- mirrors the Google Chat reply payload fields
   async replyMessage(
     threadName: string,
     spaceId: string,
@@ -27,7 +28,7 @@ export class GChatApi {
     message: string,
     formatted = false,
   ): Promise<ApiResult> {
-    const url = `${GChatApi.BASE_URL}/spaces/${spaceId}/messages?key=${this.apiKey}&token=${apiToken}&messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD`
+    const url = `${BASE_URL}/spaces/${spaceId}/messages?key=${this.apiKey}&token=${apiToken}&messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD`
     const payload: Record<string, unknown> = {text: message, thread: {name: threadName}}
     if (formatted) payload.formattedText = message
     return this.post(url, payload)
@@ -35,7 +36,6 @@ export class GChatApi {
 
   private async post(url: string, payload: Record<string, unknown>): Promise<ApiResult> {
     try {
-      // eslint-disable-next-line n/no-unsupported-features/node-builtins -- fetch is available in Node 18+
       const response = await fetch(url, {
         body: JSON.stringify(payload),
         headers: {'Content-Type': 'application/json'},

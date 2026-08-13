@@ -1,4 +1,3 @@
-/* eslint-disable n/no-unsupported-features/node-builtins */
 import {expect} from 'chai'
 import {type SinonStub, stub} from 'sinon'
 
@@ -28,7 +27,7 @@ describe('GChatApi', () => {
 
   describe('newMessage', () => {
     it('POSTs to the correct URL with key and token', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({name: 'spaces/X/messages/Y'}), {status: 200}))
+      fetchStub.resolves(Response.json({name: 'spaces/X/messages/Y'}, {status: 200}))
 
       await api.newMessage(SPACE_ID, API_TOKEN, 'Hello')
 
@@ -40,7 +39,7 @@ describe('GChatApi', () => {
     })
 
     it('sends message text in payload', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.newMessage(SPACE_ID, API_TOKEN, 'Hello team')
 
@@ -51,7 +50,7 @@ describe('GChatApi', () => {
     })
 
     it('includes formattedText when formatted=true', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.newMessage(SPACE_ID, API_TOKEN, '*Bold*', true)
 
@@ -62,7 +61,7 @@ describe('GChatApi', () => {
     })
 
     it('sets Content-Type header', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.newMessage(SPACE_ID, API_TOKEN, 'Hello')
 
@@ -72,7 +71,7 @@ describe('GChatApi', () => {
 
     it('returns success with parsed JSON on 200 response', async () => {
       const responseData = {name: 'spaces/X/messages/Y', text: 'Hello'}
-      fetchStub.resolves(new Response(JSON.stringify(responseData), {status: 200}))
+      fetchStub.resolves(Response.json(responseData, {status: 200}))
 
       const result = await api.newMessage(SPACE_ID, API_TOKEN, 'Hello')
 
@@ -83,7 +82,7 @@ describe('GChatApi', () => {
 
     it('returns error with parsed JSON on non-OK response', async () => {
       const errorBody = {error: {status: 'PERMISSION_DENIED'}}
-      fetchStub.resolves(new Response(JSON.stringify(errorBody), {status: 403}))
+      fetchStub.resolves(Response.json(errorBody, {status: 403}))
 
       const result = await api.newMessage(SPACE_ID, API_TOKEN, 'Hello')
 
@@ -122,7 +121,7 @@ describe('GChatApi', () => {
 
   describe('replyMessage', () => {
     it('POSTs to the correct URL with messageReplyOption', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.replyMessage(THREAD_NAME, SPACE_ID, API_TOKEN, 'Reply')
 
@@ -135,7 +134,7 @@ describe('GChatApi', () => {
     })
 
     it('includes thread name in payload', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.replyMessage(THREAD_NAME, SPACE_ID, API_TOKEN, 'Reply')
 
@@ -147,7 +146,7 @@ describe('GChatApi', () => {
     })
 
     it('includes formattedText when formatted=true', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.replyMessage(THREAD_NAME, SPACE_ID, API_TOKEN, '*Bold reply*', true)
 
@@ -158,7 +157,7 @@ describe('GChatApi', () => {
 
     it('returns success with data on 200 response', async () => {
       const responseData = {name: 'spaces/X/messages/Z', text: 'Reply'}
-      fetchStub.resolves(new Response(JSON.stringify(responseData), {status: 200}))
+      fetchStub.resolves(Response.json(responseData, {status: 200}))
 
       const result = await api.replyMessage(THREAD_NAME, SPACE_ID, API_TOKEN, 'Reply')
 
@@ -167,7 +166,7 @@ describe('GChatApi', () => {
     })
 
     it('returns error on non-OK response', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({error: 'Not found'}), {status: 404}))
+      fetchStub.resolves(Response.json({error: 'Not found'}, {status: 404}))
 
       const result = await api.replyMessage(THREAD_NAME, SPACE_ID, API_TOKEN, 'Reply')
 

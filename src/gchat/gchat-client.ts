@@ -4,10 +4,7 @@ import {type ApiResult, GChatApi} from './gchat-api.js'
 let gChatApi: GChatApi | null = null
 
 function initGChat(key: string): GChatApi {
-  if (!gChatApi) {
-    gChatApi = new GChatApi(key)
-  }
-
+  gChatApi ??= new GChatApi(key)
   return gChatApi
 }
 
