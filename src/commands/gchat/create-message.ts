@@ -5,12 +5,13 @@ import {formatAsToon} from '../../format.js'
 import {clearClients, newMessage} from '../../gchat/gchat-client.js'
 
 export default class GChatCreateMessage extends Command {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- spaceId must precede message in CLI arg order */
   static override args = {
     spaceId: Args.string({description: 'Google Chat space ID', required: true}),
     message: Args.string({description: 'Message text to send', required: true}),
   }
   /* eslint-enable perfectionist/sort-objects */
+
   static override description = 'Send a message to a Google Chat space'
   static override examples = [
     '<%= config.bin %> <%= command.id %> AAQAKA6hsFw "Hello team"',
@@ -18,6 +19,7 @@ export default class GChatCreateMessage extends Command {
     '<%= config.bin %> <%= command.id %> AAQAKA6hsFw "*Bold message*" --formatted',
     '<%= config.bin %> <%= command.id %> AAQAKA6hsFw "<https://example.com|Click here>" -f',
   ]
+
   static override flags = {
     formatted: Flags.boolean({char: 'f', description: 'Enable formatted text (bold, italic, links)', required: false}),
     profile: Flags.string({
@@ -35,8 +37,7 @@ export default class GChatCreateMessage extends Command {
     if (!config) return
     const auth = resolveProfile(config, flags.profile, this.log.bind(this))
     if (!auth) return
-    // eslint-disable-next-line unicorn/prefer-string-replace-all
-    const result = await newMessage(auth, args.spaceId, args.message.replace(/\\n/g, '\n'), flags.formatted)
+    const result = await newMessage(auth, args.spaceId, args.message.replaceAll(String.raw`\n`, '\n'), flags.formatted)
     clearClients()
 
     if (flags.toon) {

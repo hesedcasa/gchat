@@ -2,7 +2,7 @@
 import {expect} from 'chai'
 import esmock from 'esmock'
 import {tmpdir} from 'node:os'
-import {join} from 'node:path'
+import path from 'node:path'
 import {type SinonStub, stub} from 'sinon'
 
 describe('config', () => {
@@ -69,10 +69,10 @@ describe('config', () => {
     it('logs the config path in the error message', async () => {
       readFileStub.rejects(new Error('ENOENT'))
 
-      await readConfig(join('my', 'config', 'dir'), logStub)
+      await readConfig(path.join('my', 'config', 'dir'), logStub)
 
       const loggedMessages = logStub.args.flat().join(' ')
-      expect(loggedMessages).to.include(join('my', 'config', 'dir'))
+      expect(loggedMessages).to.include(path.join('my', 'config', 'dir'))
     })
   })
 

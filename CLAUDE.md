@@ -56,7 +56,7 @@ src/
 **ApiResult:**
 
 ```typescript
-interface ApiResult {
+type ApiResult = {
   data?: unknown
   error?: unknown
   success: boolean

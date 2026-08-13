@@ -8,6 +8,7 @@ export default class ConfigAddToken extends Command {
     spaceId: Args.string({description: 'Google Chat space ID', required: true}),
     token: Args.string({description: 'API token for this space', required: true}),
   }
+
   static override description = 'Add or update an API token for a Google Chat space within a profile'
   static override examples = ['<%= config.bin %> <%= command.id %> default AAQAKA6hsFw your-space-token']
 
