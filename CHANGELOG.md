@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/hesedcasa/gchat/compare/v0.3.0...v0.3.1) (2026-08-13)
+
+
+### ♻️ Chores
+
+* upgrade ESLint and fix TypeScript compilation errors ([#70](https://github.com/hesedcasa/gchat/issues/70)) ([7c4265f](https://github.com/hesedcasa/gchat/commit/7c4265f1d3de71ca73a2d47e7b44d015c67e004e))
+
 ## [0.3.0](https://github.com/hesedcasa/gchat/compare/v0.2.2...v0.3.0) (2026-07-08)
 
 
