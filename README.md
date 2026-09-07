@@ -47,7 +47,7 @@ USAGE
 
 Add or update an API token for a Google Chat space within a profile
 
-```
+```text
 USAGE
   $ gchat gchat config add-token PROFILE SPACEID TOKEN
 
@@ -69,7 +69,7 @@ _See code: [src/commands/gchat/config/add-token.ts](https://github.com/hesedcasa
 
 Add or update a user in the users list for tagging messages
 
-```
+```text
 USAGE
   $ gchat gchat config add-user NAME USERID
 
@@ -92,7 +92,7 @@ _See code: [src/commands/gchat/config/add-user.ts](https://github.com/hesedcasa/
 
 Set the Google Chat API key for a profile
 
-```
+```text
 USAGE
   $ gchat gchat config set-key PROFILE KEY
 
@@ -115,7 +115,7 @@ _See code: [src/commands/gchat/config/set-key.ts](https://github.com/hesedcasa/g
 
 Send a message to a Google Chat space
 
-```
+```text
 USAGE
   $ gchat gchat create-message SPACEID MESSAGE [-f] [-p <value>] [-t <value>...] [--toon]
 
@@ -150,7 +150,7 @@ _See code: [src/commands/gchat/create-message.ts](https://github.com/hesedcasa/g
 
 Reply to a message thread in Google Chat
 
-```
+```text
 USAGE
   $ gchat gchat reply-message THREADNAME MESSAGE [-f] [-p <value>] [-t <value>...] [--toon]
 

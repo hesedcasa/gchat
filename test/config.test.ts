@@ -132,6 +132,14 @@ describe('config', () => {
       expect(result).to.be.null
       expect(logStub.called).to.be.true
     })
+
+    it('ignores a users value that is not an object', async () => {
+      readFileStub.resolves(JSON.stringify({profiles: {}, users: []}))
+
+      const result = await readConfigOrEmpty('/tmp/config', logStub)
+
+      expect(result).to.deep.equal({profiles: {}, users: {}})
+    })
   })
 
   describe('writeConfig', () => {
@@ -303,6 +311,16 @@ describe('config', () => {
 
       expect(result).to.be.null
       expect(logStub.called).to.be.true
+    })
+
+    it('treats inherited property names like toString as unknown', () => {
+      const empty = {profiles: {}, users: {}}
+
+      const result = resolveTags(empty, ['toString'], logStub)
+
+      expect(result).to.be.null
+      const loggedMessages = logStub.args.flat().join(' ')
+      expect(loggedMessages).to.include('toString')
     })
   })
 

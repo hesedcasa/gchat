@@ -38,7 +38,7 @@ function parseProfiles(raw: RawConfig): Record<string, GChatAuth> {
 }
 
 function parseUsers(raw: RawConfig): Record<string, string> {
-  if (raw.users && typeof raw.users === 'object') {
+  if (raw.users && typeof raw.users === 'object' && !Array.isArray(raw.users)) {
     return raw.users
   }
 
@@ -125,7 +125,8 @@ export function resolveTags(config: GChatConfig, names: string[], log: (msg: str
   const invalid: string[] = []
   const unknown: string[] = []
   for (const name of names) {
-    const saved = config.users[name]
+    // Own-property lookup only — inherited names like 'toString' must count as unknown.
+    const saved = Object.hasOwn(config.users, name) ? config.users[name] : undefined
     if (saved === undefined) {
       if (isUserId(name)) {
         resolved.push(name)

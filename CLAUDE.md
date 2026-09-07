@@ -77,7 +77,7 @@ type ApiResult = {
 
 - `readConfig()` — returns `GChatConfig | null`, logs error if missing (use in message commands)
 - `readConfigOrEmpty(configDir, log)` — returns an empty config **only** when the file is missing (ENOENT); returns `null` + logs on unreadable/malformed config so writers never overwrite it (use in config commands; bail on `null` before mutating)
-- `writeConfig()` — creates dir if needed, writes `{profiles}` object as JSON
+- `writeConfig()` — creates dir if needed, writes `{profiles, users}` object as JSON
 - `resolveProfile(config, name, log)` — returns the profile's `GChatAuth`, or `null` + logs if not found (use in message commands after `readConfig`)
 - `addUser(configDir, name, userId, log)` — upserts `users[name]` (prepends `users/` to bare IDs), rejects IDs whose `users/` part is empty or contains whitespace, writes, returns the updated `GChatConfig` or `null` + logs
 - `resolveTags(config, names, log)` — maps `--tag` values to user IDs (passes through valid `users/<id>` values, validates saved IDs), or returns `null` + logs unknown names / invalid saved IDs
