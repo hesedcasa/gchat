@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/hesedcasa/gchat/compare/v0.3.1...v0.4.0) (2026-09-07)
+
+
+### 🎉 Features
+
+* add user tagging with users list and --tag flag ([#85](https://github.com/hesedcasa/gchat/issues/85)) ([e16b48e](https://github.com/hesedcasa/gchat/commit/e16b48e29543d40c3aee89fdb98fced0bd39d15e))
+
 ## [0.3.1](https://github.com/hesedcasa/gchat/compare/v0.3.0...v0.3.1) (2026-08-13)
 
 
