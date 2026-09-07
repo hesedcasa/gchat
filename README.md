@@ -26,7 +26,7 @@ $ npm install -g @hesed/gchat
 $ gchat COMMAND
 running command...
 $ gchat (--version)
-@hesed/gchat/0.3.1 linux-x64 node-v22.23.1
+@hesed/gchat/0.3.1 darwin-arm64 node-v24.18.0
 $ gchat --help [COMMAND]
 USAGE
   $ gchat COMMAND
@@ -38,6 +38,7 @@ USAGE
 
 <!-- commands -->
 * [`gchat gchat config add-token PROFILE SPACEID TOKEN`](#gchat-gchat-config-add-token-profile-spaceid-token)
+* [`gchat gchat config add-user NAME USERID`](#gchat-gchat-config-add-user-name-userid)
 * [`gchat gchat config set-key PROFILE KEY`](#gchat-gchat-config-set-key-profile-key)
 * [`gchat gchat create-message SPACEID MESSAGE`](#gchat-gchat-create-message-spaceid-message)
 * [`gchat gchat reply-message THREADNAME MESSAGE`](#gchat-gchat-reply-message-threadname-message)
@@ -63,6 +64,29 @@ EXAMPLES
 ```
 
 _See code: [src/commands/gchat/config/add-token.ts](https://github.com/hesedcasa/gchat/blob/v0.3.1/src/commands/gchat/config/add-token.ts)_
+
+## `gchat gchat config add-user NAME USERID`
+
+Add or update a user in the users list for tagging messages
+
+```
+USAGE
+  $ gchat gchat config add-user NAME USERID
+
+ARGUMENTS
+  NAME    Display name of the user, used with --tag
+  USERID  Google Chat user ID (e.g. users/123456789)
+
+DESCRIPTION
+  Add or update a user in the users list for tagging messages
+
+EXAMPLES
+  $ gchat gchat config add-user "Jane Doe" users/123456789012345678901
+
+  $ gchat gchat config add-user "Jane Doe" 123456789012345678901
+```
+
+_See code: [src/commands/gchat/config/add-user.ts](https://github.com/hesedcasa/gchat/blob/v0.3.1/src/commands/gchat/config/add-user.ts)_
 
 ## `gchat gchat config set-key PROFILE KEY`
 
@@ -93,7 +117,7 @@ Send a message to a Google Chat space
 
 ```
 USAGE
-  $ gchat gchat create-message SPACEID MESSAGE [-f] [-p <value>] [--toon]
+  $ gchat gchat create-message SPACEID MESSAGE [-f] [-p <value>] [-t <value>...] [--toon]
 
 ARGUMENTS
   SPACEID  Google Chat space ID
@@ -102,6 +126,7 @@ ARGUMENTS
 FLAGS
   -f, --formatted        Enable formatted text (bold, italic, links)
   -p, --profile=<value>  [default: default] Config profile to use
+  -t, --tag=<value>...   User name or users/<id> to tag (repeatable)
       --toon             Format output as toon
 
 DESCRIPTION
@@ -115,6 +140,8 @@ EXAMPLES
   $ gchat gchat create-message AAQAKA6hsFw "*Bold message*" --formatted
 
   $ gchat gchat create-message AAQAKA6hsFw "<https://example.com|Click here>" -f
+
+  $ gchat gchat create-message AAQAKA6hsFw "Deploy failed" --tag "Jane Doe"
 ```
 
 _See code: [src/commands/gchat/create-message.ts](https://github.com/hesedcasa/gchat/blob/v0.3.1/src/commands/gchat/create-message.ts)_
@@ -125,7 +152,7 @@ Reply to a message thread in Google Chat
 
 ```
 USAGE
-  $ gchat gchat reply-message THREADNAME MESSAGE [-f] [-p <value>] [--toon]
+  $ gchat gchat reply-message THREADNAME MESSAGE [-f] [-p <value>] [-t <value>...] [--toon]
 
 ARGUMENTS
   THREADNAME  Thread name (e.g. spaces/SPACE_ID/threads/THREAD_ID)
@@ -134,6 +161,7 @@ ARGUMENTS
 FLAGS
   -f, --formatted        Enable formatted text (bold, italic, links)
   -p, --profile=<value>  [default: default] Config profile to use
+  -t, --tag=<value>...   User name or users/<id> to tag (repeatable)
       --toon             Format output as toon
 
 DESCRIPTION
@@ -145,6 +173,8 @@ EXAMPLES
   $ gchat gchat reply-message spaces/AAQAKA6hsFw/threads/D1NI3W2B6vA "Reply here" --profile work
 
   $ gchat gchat reply-message spaces/AAQAKA6hsFw/threads/D1NI3W2B6vA "*Bold reply*" --formatted
+
+  $ gchat gchat reply-message spaces/AAQAKA6hsFw/threads/D1NI3W2B6vA "Check this" --tag "Jane Doe"
 ```
 
 _See code: [src/commands/gchat/reply-message.ts](https://github.com/hesedcasa/gchat/blob/v0.3.1/src/commands/gchat/reply-message.ts)_

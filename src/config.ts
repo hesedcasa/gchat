@@ -10,6 +10,7 @@ export type GChatAuth = {
 
 export type GChatConfig = {
   profiles: Record<string, GChatAuth>
+  users: Record<string, string>
 }
 
 type RawProfile = {
@@ -19,6 +20,7 @@ type RawProfile = {
 
 type RawConfig = RawProfile & {
   profiles?: Record<string, RawProfile>
+  users?: Record<string, string>
 }
 
 function parseProfiles(raw: RawConfig): Record<string, GChatAuth> {
@@ -35,27 +37,35 @@ function parseProfiles(raw: RawConfig): Record<string, GChatAuth> {
   return {[DEFAULT_PROFILE]: {key: raw.key ?? '', tokens: raw.tokens ?? {}}}
 }
 
+function parseUsers(raw: RawConfig): Record<string, string> {
+  if (raw.users && typeof raw.users === 'object') {
+    return raw.users
+  }
+
+  return {}
+}
+
 export async function readConfigOrEmpty(configDir: string): Promise<GChatConfig> {
   const configPath = path.join(configDir, 'gchat-config.json')
   try {
     const raw = JSON.parse(await readFile(configPath, 'utf8')) as RawConfig
-    return {profiles: parseProfiles(raw)}
+    return {profiles: parseProfiles(raw), users: parseUsers(raw)}
   } catch {
-    return {profiles: {}}
+    return {profiles: {}, users: {}}
   }
 }
 
 export async function writeConfig(configDir: string, config: GChatConfig): Promise<void> {
   const configPath = path.join(configDir, 'gchat-config.json')
   await mkdir(configDir, {recursive: true})
-  await writeFile(configPath, JSON.stringify({profiles: config.profiles}, null, 2))
+  await writeFile(configPath, JSON.stringify({profiles: config.profiles, users: config.users}, null, 2))
 }
 
 export async function readConfig(configDir: string, log: (msg: string) => void): Promise<GChatConfig | null> {
   const configPath = path.join(configDir, 'gchat-config.json')
   try {
     const raw = JSON.parse(await readFile(configPath, 'utf8')) as RawConfig
-    return {profiles: parseProfiles(raw)}
+    return {profiles: parseProfiles(raw), users: parseUsers(raw)}
   } catch {
     log(`Error: Could not read config from ${configPath}`)
     log('Please create gchat-config.json with your Google Chat API credentials.')
@@ -71,4 +81,31 @@ export function resolveProfile(config: GChatConfig, profile: string, log: (msg: 
   }
 
   return auth
+}
+
+const USER_PREFIX = 'users/'
+
+function isUserId(value: string): boolean {
+  return value.startsWith(USER_PREFIX) && value.length > USER_PREFIX.length
+}
+
+export async function addUser(configDir: string, name: string, userId: string): Promise<GChatConfig> {
+  const config = await readConfigOrEmpty(configDir)
+  config.users[name] = userId.startsWith(USER_PREFIX) ? userId : `${USER_PREFIX}${userId}`
+  await writeConfig(configDir, config)
+  return config
+}
+
+export function resolveTags(config: GChatConfig, names: string[], log: (msg: string) => void): null | string[] {
+  const unknown = names.filter(name => config.users[name] === undefined && !isUserId(name))
+  if (unknown.length > 0) {
+    for (const name of unknown) {
+      log(`Error: User '${name}' not found in the users list.`)
+    }
+
+    log("Run 'gchat config add-user <name> <userId>' to add or update a user.")
+    return null
+  }
+
+  return names.map(name => config.users[name] ?? name)
 }
