@@ -14,7 +14,8 @@ export default class ConfigAddToken extends Command {
 
   public async run(): Promise<void> {
     const {args} = await this.parse(ConfigAddToken)
-    const config = await readConfigOrEmpty(this.config.configDir)
+    const config = await readConfigOrEmpty(this.config.configDir, this.log.bind(this))
+    if (!config) return
     const profile = config.profiles[args.profile] ?? {key: '', tokens: {}}
     profile.tokens[args.spaceId] = args.token
     config.profiles[args.profile] = profile

@@ -19,6 +19,7 @@ describe('gchat:create-message', () => {
       default: mockAuth,
       work: {key: 'work-key', tokens: {AAQAKA6hsFw: 'work-token'}},
     },
+    users: {'Benson Liang': 'users/456', 'Broken User': 'users/foo bar', 'Jane Doe': 'users/123'},
   }
 
   const mockResult = {data: {name: 'spaces/AAQAKA6hsFw/messages/msg1'}, success: true}
@@ -137,5 +138,69 @@ describe('gchat:create-message', () => {
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)
     expect(logStub.calledWith('toon-output')).to.be.true
+  })
+
+  it('appends a mention for a user tagged with --tag', async () => {
+    const cmd = new GChatCreateMessage(['AAQAKA6hsFw', 'Hello team', '--tag', 'Jane Doe'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'logJson')
+
+    await cmd.run()
+
+    expect(newMessageStub.firstCall.args[2]).to.equal('Hello team\n<users/123>')
+  })
+
+  it('appends multiple tags in order, including ad-hoc users/ IDs', async () => {
+    const cmd = new GChatCreateMessage(['AAQAKA6hsFw', 'Hello', '--tag', 'Jane Doe', '--tag', 'users/999'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'logJson')
+
+    await cmd.run()
+
+    expect(newMessageStub.firstCall.args[2]).to.equal('Hello\n<users/123>\n<users/999>')
+  })
+
+  it('does not send when a tagged user is not in the users list', async () => {
+    const cmd = new GChatCreateMessage(['AAQAKA6hsFw', 'Hello', '--tag', 'Ghost'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logStub = stub(cmd, 'log')
+    const logJsonStub = stub(cmd, 'logJson')
+
+    await cmd.run()
+
+    expect(newMessageStub.called).to.be.false
+    expect(clearClientsStub.called).to.be.false
+    expect(logJsonStub.called).to.be.false
+    const loggedMessages = logStub.args.flat().join(' ')
+    expect(loggedMessages).to.include('Ghost')
+    expect(loggedMessages).to.include('add-user')
+  })
+
+  it('does not send when a saved user has an invalid ID', async () => {
+    const cmd = new GChatCreateMessage(['AAQAKA6hsFw', 'Hello', '--tag', 'Broken User'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logStub = stub(cmd, 'log')
+    const logJsonStub = stub(cmd, 'logJson')
+
+    await cmd.run()
+
+    expect(newMessageStub.called).to.be.false
+    expect(clearClientsStub.called).to.be.false
+    expect(logJsonStub.called).to.be.false
+    const loggedMessages = logStub.args.flat().join(' ')
+    expect(loggedMessages).to.include('Broken User')
+    expect(loggedMessages).to.include('invalid')
   })
 })

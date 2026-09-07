@@ -38,7 +38,8 @@ src/
 │   ├── reply-message.ts   # Reply to a thread
 │   └── config/
 │       ├── set-key.ts     # Set global API key
-│       └── add-token.ts   # Add/update per-space token
+│       ├── add-token.ts   # Add/update per-space token
+│       └── add-user.ts    # Add/update user for --tag mentions
 ├── gchat/
 │   ├── gchat-api.ts       # GChatApi class (native fetch, POST to Google Chat REST API)
 │   └── gchat-client.ts    # Singleton wrapper functions + clearClients()
@@ -63,19 +64,23 @@ type ApiResult = {
 }
 ```
 
-**Profiles:** Config is organized into named profiles. Each profile is one `GChatAuth` (one key + many tokens). `DEFAULT_PROFILE` is `'default'`. Message commands take an optional `--profile` / `-p` flag (defaults to `default`); config commands take a **required** `profile` positional arg.
+**Profiles:** Config is organized into named profiles. Each profile is one `GChatAuth` (one key + many tokens). `DEFAULT_PROFILE` is `'default'`. Message commands take an optional `--profile` / `-p` flag (defaults to `default`); config commands take a **required** `profile` positional arg — except `config add-user`, which has none (the users list is global).
 
 **Authentication:** Google Chat requires two credentials per space, scoped to a profile:
 
 - An API key (`profile.key`) — shared across all spaces in that profile
 - A per-space token (`profile.tokens[spaceId]`) — unique per space
 
+**Users list:** `users` is a global map (outside profiles) of display name → Google Chat user ID (`users/123…`). Message commands take a repeatable `--tag` / `-t` flag: each value is a saved name or a raw `users/<id>`; resolved IDs are appended to the message as `<users/…>` mention lines. An unknown name logs an error and aborts the send.
+
 **Config functions:**
 
 - `readConfig()` — returns `GChatConfig | null`, logs error if missing (use in message commands)
-- `readConfigOrEmpty()` — returns `GChatConfig` with empty `profiles` (use in config commands)
-- `writeConfig()` — creates dir if needed, writes `{profiles}` object as JSON
+- `readConfigOrEmpty(configDir, log)` — returns an empty config **only** when the file is missing (ENOENT); returns `null` + logs on unreadable/malformed config so writers never overwrite it (use in config commands; bail on `null` before mutating)
+- `writeConfig()` — creates dir if needed, writes `{profiles, users}` object as JSON
 - `resolveProfile(config, name, log)` — returns the profile's `GChatAuth`, or `null` + logs if not found (use in message commands after `readConfig`)
+- `addUser(configDir, name, userId, log)` — upserts `users[name]` (prepends `users/` to bare IDs), rejects IDs whose `users/` part is empty or contains whitespace, writes, returns the updated `GChatConfig` or `null` + logs
+- `resolveTags(config, names, log)` — maps `--tag` values to user IDs (passes through valid `users/<id>` values, validates saved IDs), or returns `null` + logs unknown names / invalid saved IDs
 
 Config is stored at `~/.config/gchat/gchat-config.json`:
 
@@ -90,7 +95,8 @@ Config is stored at `~/.config/gchat/gchat-config.json`:
       "key": "your-work-api-key",
       "tokens": {}
     }
-  }
+  },
+  "users": {"Jane Doe": "users/123456789012345678901"}
 }
 ```
 
@@ -145,6 +151,7 @@ const cmd = new GChatCreateMessage(['SPACE_ID', 'Hello'], {
 ### Linting quirks
 
 - `unicorn/no-useless-undefined`: use `stub.firstCall.args[0] === undefined` instead of `stub.calledWith(undefined)`
+- `require-unicode-regexp` enforces the `v` flag, but `tsconfig` targets `es2022` where `tsc` rejects it (TS1501) — avoid regex literals; prefer string methods like `startsWith`
 
 ## Commit Message Convention
 

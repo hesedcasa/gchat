@@ -107,4 +107,21 @@ describe('gchat:config:add-token', () => {
     const writtenConfig = writeConfigStub.firstCall.args[1]
     expect(writtenConfig.profiles.default.key).to.equal('preserved-key')
   })
+
+  it('does not overwrite an unreadable config', async () => {
+    readConfigOrEmptyStub.resolves(null)
+
+    const cmd = new ConfigAddToken(['default', 'SPACE1', 'tok'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logStub = stub(cmd, 'log')
+
+    await cmd.run()
+
+    expect(typeof readConfigOrEmptyStub.firstCall.args[1]).to.equal('function')
+    expect(writeConfigStub.called).to.be.false
+    expect(logStub.called).to.be.false
+  })
 })
