@@ -1,6 +1,6 @@
 import {Args, Command, Flags} from '@oclif/core'
 
-import {DEFAULT_PROFILE, readConfig, resolveProfile} from '../../config.js'
+import {DEFAULT_PROFILE, readConfig, resolveProfile, resolveTags} from '../../config.js'
 import {formatAsToon} from '../../format.js'
 import {clearClients, newMessage} from '../../gchat/gchat-client.js'
 
@@ -18,6 +18,7 @@ export default class GChatCreateMessage extends Command {
     '<%= config.bin %> <%= command.id %> AAQAKA6hsFw "Hello work" --profile work',
     '<%= config.bin %> <%= command.id %> AAQAKA6hsFw "*Bold message*" --formatted',
     '<%= config.bin %> <%= command.id %> AAQAKA6hsFw "<https://example.com|Click here>" -f',
+    '<%= config.bin %> <%= command.id %> AAQAKA6hsFw "Deploy failed" --tag "Jane Doe"',
   ]
 
   static override flags = {
@@ -26,6 +27,12 @@ export default class GChatCreateMessage extends Command {
       char: 'p',
       default: DEFAULT_PROFILE,
       description: 'Config profile to use',
+      required: false,
+    }),
+    tag: Flags.string({
+      char: 't',
+      description: 'User name or users/<id> to tag (repeatable)',
+      multiple: true,
       required: false,
     }),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
@@ -37,7 +44,14 @@ export default class GChatCreateMessage extends Command {
     if (!config) return
     const auth = resolveProfile(config, flags.profile, this.log.bind(this))
     if (!auth) return
-    const result = await newMessage(auth, args.spaceId, args.message.replaceAll(String.raw`\n`, '\n'), flags.formatted)
+    const tags = resolveTags(config, flags.tag ?? [], this.log.bind(this))
+    if (!tags) return
+    let message = args.message.replaceAll(String.raw`\n`, '\n')
+    for (const tag of tags) {
+      message += `\n<${tag}>`
+    }
+
+    const result = await newMessage(auth, args.spaceId, message, flags.formatted)
     clearClients()
 
     if (flags.toon) {
