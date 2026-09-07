@@ -45,13 +45,22 @@ function parseUsers(raw: RawConfig): Record<string, string> {
   return {}
 }
 
-export async function readConfigOrEmpty(configDir: string): Promise<GChatConfig> {
+export async function readConfigOrEmpty(configDir: string, log: (msg: string) => void): Promise<GChatConfig | null> {
   const configPath = path.join(configDir, 'gchat-config.json')
   try {
     const raw = JSON.parse(await readFile(configPath, 'utf8')) as RawConfig
     return {profiles: parseProfiles(raw), users: parseUsers(raw)}
-  } catch {
-    return {profiles: {}, users: {}}
+  } catch (error) {
+    // A missing file means the user has not configured anything yet — start empty.
+    // Any other failure (malformed JSON, unreadable file) must not be treated as
+    // an empty config, or the next write would silently destroy the existing one.
+    if (error instanceof Error && (error as {code?: string}).code === 'ENOENT') {
+      return {profiles: {}, users: {}}
+    }
+
+    log(`Error: Could not read config from ${configPath}`)
+    log('Fix or remove the file and retry — nothing was overwritten.')
+    return null
   }
 }
 
@@ -86,26 +95,64 @@ export function resolveProfile(config: GChatConfig, profile: string, log: (msg: 
 const USER_PREFIX = 'users/'
 
 function isUserId(value: string): boolean {
-  return value.startsWith(USER_PREFIX) && value.length > USER_PREFIX.length
+  if (!value.startsWith(USER_PREFIX)) return false
+  const id = value.slice(USER_PREFIX.length)
+  return id.length > 0 && [...id].every((char) => char.trim().length > 0)
 }
 
-export async function addUser(configDir: string, name: string, userId: string): Promise<GChatConfig> {
-  const config = await readConfigOrEmpty(configDir)
-  config.users[name] = userId.startsWith(USER_PREFIX) ? userId : `${USER_PREFIX}${userId}`
+export async function addUser(
+  configDir: string,
+  name: string,
+  userId: string,
+  log: (msg: string) => void,
+): Promise<GChatConfig | null> {
+  const config = await readConfigOrEmpty(configDir, log)
+  if (!config) return null
+
+  const normalized = userId.startsWith(USER_PREFIX) ? userId : `${USER_PREFIX}${userId}`
+  if (!isUserId(normalized)) {
+    log(`Error: Invalid user ID '${userId}'. Expected a 'users/<id>' value with a non-empty, whitespace-free ID.`)
+    return null
+  }
+
+  config.users[name] = normalized
   await writeConfig(configDir, config)
   return config
 }
 
 export function resolveTags(config: GChatConfig, names: string[], log: (msg: string) => void): null | string[] {
-  const unknown = names.filter(name => config.users[name] === undefined && !isUserId(name))
-  if (unknown.length > 0) {
-    for (const name of unknown) {
-      log(`Error: User '${name}' not found in the users list.`)
+  const resolved: string[] = []
+  const invalid: string[] = []
+  const unknown: string[] = []
+  for (const name of names) {
+    const saved = config.users[name]
+    if (saved === undefined) {
+      if (isUserId(name)) {
+        resolved.push(name)
+      } else {
+        unknown.push(name)
+      }
+
+      continue
     }
 
-    log("Run 'gchat config add-user <name> <userId>' to add or update a user.")
-    return null
+    if (isUserId(saved)) {
+      resolved.push(saved)
+    } else {
+      invalid.push(name)
+    }
   }
 
-  return names.map(name => config.users[name] ?? name)
+  if (invalid.length === 0 && unknown.length === 0) return resolved
+
+  for (const name of invalid) {
+    log(`Error: Saved user '${name}' has an invalid ID: '${config.users[name]}'.`)
+  }
+
+  for (const name of unknown) {
+    log(`Error: User '${name}' not found in the users list.`)
+  }
+
+  log("Run 'gchat config add-user <name> <userId>' to add or update a user.")
+  return null
 }

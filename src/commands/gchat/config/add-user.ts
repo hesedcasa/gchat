@@ -16,7 +16,8 @@ export default class ConfigAddUser extends Command {
 
   public async run(): Promise<void> {
     const {args} = await this.parse(ConfigAddUser)
-    const config = await addUser(this.config.configDir, args.name, args.userId)
+    const config = await addUser(this.config.configDir, args.name, args.userId, this.log.bind(this))
+    if (!config) return
     this.log(`User '${args.name}' saved as ${config.users[args.name]} in the users list.`)
   }
 }

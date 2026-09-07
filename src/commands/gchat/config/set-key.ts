@@ -18,7 +18,8 @@ export default class ConfigSetKey extends Command {
 
   public async run(): Promise<void> {
     const {args} = await this.parse(ConfigSetKey)
-    const config = await readConfigOrEmpty(this.config.configDir)
+    const config = await readConfigOrEmpty(this.config.configDir, this.log.bind(this))
+    if (!config) return
     const profile = config.profiles[args.profile] ?? {key: '', tokens: {}}
     profile.key = args.key
     config.profiles[args.profile] = profile

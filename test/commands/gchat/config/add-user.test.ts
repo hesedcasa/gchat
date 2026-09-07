@@ -45,4 +45,20 @@ describe('gchat:config:add-user', () => {
     expect(addUserStub.calledWith('/tmp/test-config', 'Jane Doe', '123456789012345678901')).to.be.true
     expect(logStub.calledWith("User 'Jane Doe' saved as users/123456789012345678901 in the users list.")).to.be.true
   })
+
+  it('passes its logger to addUser and stays silent when addUser fails', async () => {
+    addUserStub.resolves(null)
+
+    const cmd = new ConfigAddUser(['Jane Doe', 'users/foo bar'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    const logStub = stub(cmd, 'log')
+
+    await cmd.run()
+
+    expect(typeof addUserStub.firstCall.args[3]).to.equal('function')
+    expect(logStub.called).to.be.false
+  })
 })
