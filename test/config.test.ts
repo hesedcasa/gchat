@@ -121,7 +121,7 @@ describe('config', () => {
 
       expect(result).to.be.null
       const loggedMessages = logStub.args.flat().join(' ')
-      expect(loggedMessages).to.include('/tmp/config/gchat-config.json')
+      expect(loggedMessages).to.include(path.join('/tmp/config', 'gchat-config.json'))
     })
 
     it('returns null and logs when the config cannot be read', async () => {
